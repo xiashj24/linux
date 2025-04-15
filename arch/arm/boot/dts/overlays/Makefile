@@ -360,8 +360,10 @@ dtbo-$(CONFIG_ARCH_BCM2835) += \
 	wm8960-soundcard.dtbo \
 	ws2812-pio.dtbo
 
-dtbo-$(CONFIG_ARCH_BCM2835) += jt60849.dtbo \
-	gd035hv316b.dtbo
+dtbo-$(CONFIG_ARCH_BCM2835) += \
+	jt60849.dtbo \
+	gd035hv316b.dtbo \
+	gd035wv270b.dtbo
 
 targets += dtbs dtbs_install
 targets += $(dtbo-y)

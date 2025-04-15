@@ -191,7 +191,7 @@ static u8 st7701_vgls_map(struct st7701 *st7701)
 
 	return 0;
 }
-
+// MARK: switch_cmd_bkx
 static void st7701_switch_cmd_bkx(struct st7701 *st7701, bool cmd2, u8 bkx)
 {
 	u8 val;
@@ -203,7 +203,7 @@ static void st7701_switch_cmd_bkx(struct st7701 *st7701, bool cmd2, u8 bkx)
 
 	ST7701_WRITE(st7701, ST7701_CMD2BKX_SEL, 0x77, 0x01, 0x00, 0x00, val);
 }
-
+// MARK: init sequence
 static void st7701_init_sequence(struct st7701 *st7701)
 {
 	const struct st7701_panel_desc *desc = st7701->desc;
@@ -518,6 +518,106 @@ static void rg28xx_gip_sequence(struct st7701 *st7701)
 	msleep(10);
 	ST7701_WRITE(st7701, 0xE8, 0x00, 0x00);
 	st7701_switch_cmd_bkx(st7701, false, 0);
+}
+
+// MARK: gip sequence
+static void gd035wv270b_gip_sequence(struct st7701 *st7701)
+{
+	// st7701_switch_cmd_bkx cmd 2 bk3
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x13);
+	// ? don't know but other panels have the same line
+	ST7701_WRITE(st7701, 0xEF, 0x08); // not likely to be 0xEE
+
+	// st7701_switch_cmd_bkx cmd 2 bk0
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x10);
+	// Display Line setting
+	ST7701_WRITE(st7701, 0xC0, 0x63, 0x00);
+	// Porch control
+	ST7701_WRITE(st7701, 0xC1, 0x10, 0x02);
+	// Inversion selection
+	ST7701_WRITE(st7701, 0xC2, 0x01, 0x02); // 0x20, 0x02?
+	// ? rg28xx has the exact same line
+	ST7701_WRITE(st7701, 0xCC, 0x10);
+	// positive gamma control
+	ST7701_WRITE(st7701, 0xB0, 0xC0, 0x0C, 0x92, 0x0C, 0x10, 0x05, 0x02,
+				0x0D, 0x07, 0x21, 0x04, 0x53, 0x11, 0x6A, 0x32, 0x1F);
+
+	// negative gamma control
+	ST7701_WRITE(st7701, 0xB1, 0xC0, 0x87, 0xCF, 0x0C, 0x10, 0x06, 0x00,
+				0x03, 0x08, 0x1D, 0x06, 0x54, 0x12, 0xE6, 0xEC, 0x0F);
+	/*--------------------- Power Control Registers ----------------------*/
+	// st7701_switch_cmd_bkx bk1
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x11);
+	// Vop
+	ST7701_WRITE(st7701, 0xB0, 0x5D);
+	// Vcom
+	ST7701_WRITE(st7701, 0xB1, 0x52);
+	// Vgh
+	ST7701_WRITE(st7701, 0xB2, 0x82);
+	// TEST commmand setting?
+	ST7701_WRITE(st7701, 0xB3, 0x80);
+	// Vgl
+	ST7701_WRITE(st7701, 0xB5, 0x42);
+	// Power control 1
+	ST7701_WRITE(st7701, 0xB7, 0x85);
+	// Power control 12
+	ST7701_WRITE(st7701, 0xB8, 0x20);
+	// ? rg_arc has the same line
+	ST7701_WRITE(st7701, 0xC0, 0x09);
+	// Source pre_drive (T2D)
+	ST7701_WRITE(st7701, 0xC1, 0x78);
+	// Source EQ2 (T3D)
+	ST7701_WRITE(st7701, 0xC2, 0x78);
+	// MIPI Setting 1 (EOT)
+	ST7701_WRITE(st7701, 0xD0, 0x88);
+
+	// ?? don't know but other panels appear to have the exact same line before GIP sequence
+	ST7701_WRITE(st7701, 0xEE, 0x42);
+
+	msleep(100); // necessary?
+	/*--------------------------------GIP Setting---------------------------------*/
+	ST7701_WRITE(st7701, 0xE0, 0x00, 0x00, 0x02);
+	ST7701_WRITE(st7701, 0xE1, 0x04, 0xA0, 0x06, 0xA0, 0x05, 0xA0, 0x07, 0xA0, 0x00, 0x44, 0x44);
+	ST7701_WRITE(st7701, 0xE2, 0x00, 0x00, 0x33, 0x33, 0x01, 0xA0, 0x00, 0x00, 0x01, 0xA0, 0x00, 0x00);
+	ST7701_WRITE(st7701, 0xE3, 0x00, 0x00, 0x33, 0x33);
+	ST7701_WRITE(st7701, 0xE4, 0x44, 0x44);
+	ST7701_WRITE(st7701, 0xE5, 0x0C, 0x30, 0xA0, 0xA0, 0x0E, 0x32, 0xA0, 0xA0, 0x08, 0x2C, 0xA0, 0xA0, 0x0A, 0x2E, 0xA0, 0xA0);
+	ST7701_WRITE(st7701, 0xE6, 0x00, 0x00, 0x33, 0x33);
+	ST7701_WRITE(st7701, 0xE7, 0x44, 0x44);
+	ST7701_WRITE(st7701, 0xE8, 0x0D, 0x31, 0xA0, 0xA0, 0x0F, 0x33, 0xA0, 0xA0, 0x09, 0x2D, 0xA0, 0xA0, 0x0B, 0x2F, 0xA0, 0xA0);
+	ST7701_WRITE(st7701, 0xEB, 0x00, 0x01, 0xE4, 0xE4, 0x44, 0x88, 0x00);
+	ST7701_WRITE(st7701, 0xED, 0xFF, 0xF5, 0x47, 0x6F, 0x0B, 0xA1, 0xA2, 0xBF, 0xFB, 0x2A, 0x1A, 0xB0, 0xF6, 0x74, 0x5F, 0xFF);
+	ST7701_WRITE(st7701, 0xEF, 0x08, 0x08, 0x08, 0x40, 0x3F, 0x64);
+	/*--------------------------------End GIP Setting-----------------------------*/
+
+	// st7701_switch_cmd_bkx cmd2 bk3
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x13);
+	// ???
+	ST7701_WRITE(st7701, 0xE8, 0x00, 0x0E);
+
+	// st7701_switch_cmd_bkx cmd1
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x00);
+	ST7701_WRITE(st7701, MIPI_DCS_EXIT_SLEEP_MODE); // 0x11
+
+	msleep(200);
+
+	// dmt028vghmcmi has the exact same block as below, so just leave it
+	// st7701_switch_cmd_bkx cmd2 bk3
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x13);
+	// something about adress mode?
+	ST7701_WRITE(st7701, 0xE8, 0x00, 0x0C);
+	msleep(10);
+	ST7701_WRITE(st7701, 0xE8, 0x00, 0x00);
+
+	// st7701_switch_cmd_bkx cmd1
+	// ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x00); // probably redundant
+	// SET_PIXEL_FORMAT
+	// ST7701_WRITE(st7701, MIPI_DCS_SET_PIXEL_FORMAT, 0x77); // probably redundant
+
+	// MIPI_DCS_SET_DISPLAY_ON? probably redundant
+	// ST7701_WRITE(st7701, 0x29); 
+
+	msleep(50);
 }
 
 static int st7701_prepare(struct drm_panel *panel)
@@ -1135,6 +1235,49 @@ static const struct st7701_panel_desc rg28xx_desc = {
 	.gip_sequence = rg28xx_gip_sequence,
 };
 
+// MARK: gd035wv270b
+static const struct drm_display_mode gd035wv270b_mode = {
+	.clock = 32000,
+
+	.hdisplay = 480,
+	.hsync_start = 480 + 60, //  30
+	.hsync_end = 480 + 60 + 4, // 30 + 4
+	.htotal = 480 + 60 + 4 + 70, // 30 + 4 + 50
+
+	.vdisplay = 800,
+	.vsync_start = 800 + 17, // 20 
+	.vsync_end = 800 + 17 + 2 , // 20 + 1
+	.vtotal = 800 + 17 + 2 + 8, // 20 + 1 + 15
+
+	.width_mm = 45,
+	.height_mm = 76,
+
+	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
+};
+
+static const struct st7701_panel_desc gd035wv270b_desc = {
+	.mode = &gd035wv270b_mode,
+	.lanes = 2,
+	.format = MIPI_DSI_FMT_RGB888,
+	.panel_sleep_delay = 80,
+	// .pv_gamma = {},
+	// .nv_gamma = {},
+	// .nlinv = 1, // 0: 1 dot  1: 2 dot  7: column
+	// .vop_uv = 4750000,
+	// .vcom_uv = 1100000,
+	// .vgh_mv = 15000,
+	// .vgl_mv = -9510,
+	// .avdd_mv = 6600,
+	// .avcl_mv = -4400,
+	// .gamma_op_bias = OP_BIAS_MIDDLE,
+	// .input_op_bias = OP_BIAS_MIN,
+	// .output_op_bias = OP_BIAS_MIN,
+	// .t2d_ns = 1600,
+	// .t3d_ns = 10400,
+	// .eot_en = true,
+	.gip_sequence = gd035wv270b_gip_sequence,
+};
+
 static void st7701_cleanup(void *data)
 {
 	struct st7701 *st7701 = (struct st7701 *)data;
@@ -1265,6 +1408,7 @@ static const struct of_device_id st7701_dsi_of_match[] = {
 	{ .compatible = "densitron,dmt028vghmcmi-1a", .data = &dmt028vghmcmi_1a_desc },
 	{ .compatible = "elida,kd50t048a", .data = &kd50t048a_desc },
 	{ .compatible = "techstar,ts8550b", .data = &ts8550b_desc },
+	{ .compatible = "gd035wv270b", .data = &gd035wv270b_desc },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, st7701_dsi_of_match);

@@ -1,0 +1,42 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+ 
+/ {
+    compatible = "brcm,bcm2835";
+ 	
+ 	dsi_frag:fragment@0 {
+ 		target = <&dsi1>;
+ 
+ 		__overlay__ {
+ 			status = "okay";
+             #address-cells = <1>;
+ 			#size-cells = <0>;
+ 
+            port {
+ 				dsi_out:endpoint {
+ 					remote-endpoint = <&panel_in>;
+ 				};
+ 			};
+ 
+            gd035wv270b:gd035wv270b@0 {
+ 				compatible = "gd035wv270b","sitronix,st7701";
+ 				reg = <0>;
+ 				status = "okay";
+				rotation = <90>;
+ 				reset-gpios = <&gpio 17 GPIO_ACTIVE_LOW>;
+ 				port {
+ 					panel_in:endpoint {
+ 						remote-endpoint = <&dsi_out>;
+ 					};
+ 				};ls
+				
+ 			};
+ 		};
+ 	};
+ 
+ 	__overrides__ {
+ 		dsi0 = <&dsi_frag>, "target:0=",<&dsi0>;
+ 	};
+};
