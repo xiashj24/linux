@@ -218,13 +218,6 @@ static int st7365_hard_reset(struct st7365 *ctx)
 	return 0;
 }
 
-static int st7365_power_off(struct st7365 *ctx)
-{
-	gpiod_set_value_cansleep(ctx->reset, 0);
-
-	return 0;
-}
-
 // MARK: st7365_init
 static int st7365_init(struct st7365 *panel)
 {
@@ -274,7 +267,8 @@ static int st7365_prepare(struct drm_panel *panel)
 
 	ret = st7365_init(ctx);
 	if (ret < 0) {
-		st7365_power_off(ctx);
+		gpiod_set_value_cansleep(ctx->reset, 0);
+
 		dev_info(dev, "prepare failed.");
 		return ret;
 	}
@@ -296,7 +290,7 @@ static int st7365_unprepare(struct drm_panel *panel)
 	if (ret < 0)
 		return ret;
 
-	st7365_power_off(ctx);
+	gpiod_set_value_cansleep(ctx->reset, 0);
 
 	dev_info(dev, "unprepare done.");
 	return 0;
@@ -309,6 +303,8 @@ static int st7365_enable(struct drm_panel *panel)
 	unsigned char pixel_format;
 
 	dev_info(panel->dev, "enable start.");
+
+	// msleep(120);
 
 	mipi_dsi_dcs_set_display_on_multi(&ctx);
 
@@ -352,15 +348,22 @@ static int st7365_get_modes(struct drm_panel *panel,
 	if (mode->name[0] == '\0')
 		drm_mode_set_name(mode);
 
-	// connector->display_info.bpc = 8;
+	mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
+	drm_mode_probed_add(connector, mode);
+
 	connector->display_info.width_mm = mode->width_mm;
 	connector->display_info.height_mm = mode->height_mm;
-	drm_mode_probed_add(connector, mode);
 
 	// drm_display_info_set_bus_formats(&connector->display_info,
 	// 				 &ctx->desc->bus_format, 1);
 	// connector->display_info.bus_flags =
 	// 	DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE;
+
+	/*
+	 * TODO: Remove once all drm drivers call
+	 * drm_connector_set_orientation_from_panel()
+	 */
+	drm_connector_set_panel_orientation(connector, ctx->orientation);
 
 	return 1;
 }
@@ -420,7 +423,6 @@ static const struct drm_display_mode gd035hv316b_mode = {
 	.height_mm = 73,
 
 	.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
-	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
 };
 
 static const struct st7365_panel_desc gd035hv316b_desc = {
@@ -455,7 +457,6 @@ static const struct drm_display_mode jt60849_mode = {
 	.height_mm = 73,
 
 	.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
-	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
 };
 
 static const struct st7365_panel_desc jt60849_desc = {
@@ -466,7 +467,7 @@ static const struct st7365_panel_desc jt60849_desc = {
 	.format =
 		// MIPI_DSI_FMT_RGB888,
 	// MIPI_DSI_FMT_RGB666,
-	// MIPI_DSI_FMT_RGB666_PACKED,s
+	// MIPI_DSI_FMT_RGB666_PACKED,
 	MIPI_DSI_FMT_RGB565,
 
 	// .bus_format =
@@ -489,21 +490,18 @@ static int st7365_dsi_probe(struct mipi_dsi_device *dsi)
 	if (!ctx)
 		return -ENOMEM;
 
-	ctx->desc = of_device_get_match_data(dev);
-
-	ctx->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(ctx->reset))
-		return dev_err_probe(dev, PTR_ERR(ctx->reset),
-				     "Failed to get reset gpio\n");
-
 	mipi_dsi_set_drvdata(dsi, ctx);
 	ctx->dsi = dsi;
 
-	dsi->mode_flags = ctx->desc->mode_flags;
-	dsi->format = ctx->desc->format;
-	dsi->lanes = ctx->desc->lanes;
+	ctx->desc = of_device_get_match_data(dev);
 
+	ctx->panel.prepare_prev_first = true;
 	drm_panel_init(&ctx->panel, dev, &st7365_funcs, DRM_MODE_CONNECTOR_DSI);
+
+	ctx->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
+	if (IS_ERR(ctx->reset))
+		return dev_err_probe(dev, PTR_ERR(ctx->reset),
+				     "Failed get reset GPIO\n");
 
 	ret = of_drm_get_panel_orientation(dev->of_node, &ctx->orientation);
 	if (ret)
@@ -513,8 +511,11 @@ static int st7365_dsi_probe(struct mipi_dsi_device *dsi)
 	if (ret)
 		return dev_err_probe(dev, ret, "Failed to get backlight\n");
 
-	ctx->panel.prepare_prev_first = true;
 	drm_panel_add(&ctx->panel);
+
+	dsi->mode_flags = ctx->desc->mode_flags;
+	dsi->format = ctx->desc->format;
+	dsi->lanes = ctx->desc->lanes;
 
 	ret = mipi_dsi_attach(dsi);
 	if (ret < 0) {
