@@ -3,8 +3,6 @@
  * Author: Shijie Xia
  */
 
-// mostly based on panel-ilitek-ili9806e.c
-
 #include <drm/drm_mipi_dsi.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_panel.h>
@@ -24,19 +22,15 @@ struct st7365_panel_desc {
 	unsigned int lanes;
 	unsigned long mode_flags;
 	enum mipi_dsi_pixel_format format;
-	// unsigned int bus_format;
-	// .bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE,
 	void (*init_sequence)(struct mipi_dsi_multi_context *ctx);
 };
 
 struct st7365 {
 	struct drm_panel panel;
-	struct mipi_dsi_device *dsi; //struct device *dev;
+	struct mipi_dsi_device *dsi;
 	const struct st7365_panel_desc *desc;
 
-	// struct regulator_bulk_data supplies[2];
 	struct gpio_desc *reset;
-	// unsigned int sleep_delay;
 	enum drm_panel_orientation orientation;
 };
 
@@ -45,7 +39,7 @@ static inline struct st7365 *panel_to_st7365(struct drm_panel *panel)
 	return container_of(panel, struct st7365, panel);
 }
 
-static void gd035hv316b_init_sequence_1(struct mipi_dsi_multi_context *ctx)
+static void gd035hv316b_init_sequence(struct mipi_dsi_multi_context *ctx)
 {
 	mipi_dsi_dcs_write_seq_multi(ctx, 0x11);
 	mipi_dsi_msleep(ctx, 120);
@@ -53,8 +47,7 @@ static void gd035hv316b_init_sequence_1(struct mipi_dsi_multi_context *ctx)
 	// Memory Data Access Control
 	mipi_dsi_dcs_write_seq_multi(ctx, 0x36, 0x48);
 	// Interface Pixel Format
-	mipi_dsi_dcs_write_seq_multi(ctx, 0x3A, 0x56);
-	// mipi_dsi_dcs_write_seq_multi(ctx, 0x3A, 0x77); // 24 bit
+	mipi_dsi_dcs_write_seq_multi(ctx, 0x3A, 0x66);
 	// Command Control (enable command 2)
 	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0xC3);
 	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0x96);
@@ -98,62 +91,62 @@ static void gd035hv316b_init_sequence_1(struct mipi_dsi_multi_context *ctx)
 	mipi_dsi_dcs_write_seq_multi(ctx, 0x21); // Inversion On
 }
 
-static void gd035hv316b_init_sequence_2(struct mipi_dsi_multi_context *ctx)
-{
-	// Sleep Out
-	mipi_dsi_dcs_write_seq_multi(ctx, 0x11);
-	mipi_dsi_msleep(ctx, 120);
+// static void gd035hv316b_init_sequence_2(struct mipi_dsi_multi_context *ctx)
+// {
+// 	// Sleep Out
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0x11);
+// 	mipi_dsi_msleep(ctx, 120);
 
-	// Memory Data Access Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0x36, 0x48);
-	// Interface Pixel Format
-	mipi_dsi_dcs_write_seq_multi(ctx, 0x3A, 0x56);
-	// Command Set Control (enable command 2)
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0xC3);
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0x96);
-	// Interface Mode Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xB0, 0x80);
-	// Frame Rate Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xB1, 0x80, 0x10);
-	// Display Inversion Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xB4, 0x01); // 0x01: 1-dot inversion
-	// Blanking Porch Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xB5, 0x1F, 0x50, 0x00, 0x20);
-	// Display Function Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xB6, 0x20, 0x02, 0x3B);
-	// Entry Mode Set
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xB7, 0xC6);
-	// Mode Selection
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xB9, 0x02); // dithering on
-	// Power Control 1
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xC0, 0x80, 0x25);
-	// Power Control 2
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xC1, 0x09);
-	// Power Control 3
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xC2, 0xA7);
-	// VCOM Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xC5, 0x0F);
-	// Display Output Ctrl Adjust
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xE8, 0x40, 0x8A, 0x00, 0x00, 0x29,
-				     0x19, 0xA5, 0x33);
+// 	// Memory Data Access Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0x36, 0x48);
+// 	// Interface Pixel Format
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0x3A, 0x56);
+// 	// Command Set Control (enable command 2)
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0xC3);
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0x96);
+// 	// Interface Mode Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xB0, 0x80);
+// 	// Frame Rate Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xB1, 0x80, 0x10);
+// 	// Display Inversion Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xB4, 0x01); // 0x01: 1-dot inversion
+// 	// Blanking Porch Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xB5, 0x1F, 0x50, 0x00, 0x20);
+// 	// Display Function Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xB6, 0x20, 0x02, 0x3B);
+// 	// Entry Mode Set
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xB7, 0xC6);
+// 	// Mode Selection
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xB9, 0x02); // dithering on
+// 	// Power Control 1
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xC0, 0x80, 0x25);
+// 	// Power Control 2
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xC1, 0x09);
+// 	// Power Control 3
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xC2, 0xA7);
+// 	// VCOM Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xC5, 0x0F);
+// 	// Display Output Ctrl Adjust
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xE8, 0x40, 0x8A, 0x00, 0x00, 0x29,
+// 				     0x19, 0xA5, 0x33);
 
-	// Positive Gamma Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xE0, 0xD2, 0x05, 0x08, 0x06, 0x05,
-				     0x02, 0x2A, 0x44, 0x46, 0x39, 0x15, 0x15,
-				     0x2D, 0x32);
+// 	// Positive Gamma Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xE0, 0xD2, 0x05, 0x08, 0x06, 0x05,
+// 				     0x02, 0x2A, 0x44, 0x46, 0x39, 0x15, 0x15,
+// 				     0x2D, 0x32);
 
-	// Negative Gamma Control
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xE1, 0x96, 0x08, 0x0C, 0x09, 0x09,
-				     0x25, 0x2E, 0x43, 0x42, 0x35, 0x11, 0x11,
-				     0x28, 0x2E);
+// 	// Negative Gamma Control
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xE1, 0x96, 0x08, 0x0C, 0x09, 0x09,
+// 				     0x25, 0x2E, 0x43, 0x42, 0x35, 0x11, 0x11,
+// 				     0x28, 0x2E);
 
-	// Command Set Control (disable command 2)
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0x3C);
-	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0x69);
+// 	// Command Set Control (disable command 2)
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0x3C);
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0x69);
 
-	mipi_dsi_msleep(ctx, 120);
-	mipi_dsi_dcs_write_seq_multi(ctx, 0x21); // inversion on
-}
+// 	mipi_dsi_msleep(ctx, 120);
+// 	mipi_dsi_dcs_write_seq_multi(ctx, 0x21); // inversion on
+// }
 
 // MARK: init seq
 static void jt60849_init_sequence(struct mipi_dsi_multi_context *ctx)
@@ -165,7 +158,7 @@ static void jt60849_init_sequence(struct mipi_dsi_multi_context *ctx)
 	// TODO: try row colomn exchange
 	mipi_dsi_dcs_write_seq_multi(ctx, 0x36, 0x48);
 	// Interface Pixel Format
-	mipi_dsi_dcs_write_seq_multi(ctx, 0x3A, 0x55); // 0x77
+	mipi_dsi_dcs_write_seq_multi(ctx, 0x3A, 0x55);
 	// Command Set Control
 	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0xC3);
 	mipi_dsi_dcs_write_seq_multi(ctx, 0xF0, 0x96);
@@ -203,7 +196,7 @@ static void jt60849_init_sequence(struct mipi_dsi_multi_context *ctx)
 
 	mipi_dsi_msleep(ctx, 120); // Delay
 	mipi_dsi_dcs_write_seq_multi(ctx, 0x21); // Inversion On
-	// mipi_dsi_dcs_write_seq_multi(ctx, 0x29); // Display On
+	mipi_dsi_dcs_write_seq_multi(ctx, 0x29); // Display On
 }
 
 static int st7365_hard_reset(struct st7365 *ctx)
@@ -223,10 +216,6 @@ static int st7365_init(struct st7365 *panel)
 {
 	struct mipi_dsi_multi_context ctx = { .dsi = panel->dsi };
 
-	// soft reset
-	// mipi_dsi_dcs_soft_reset_multi(&ctx);
-	// mipi_dsi_msleep(&ctx, 120);
-
 	// sleep off before init sequence
 	mipi_dsi_dcs_exit_sleep_mode_multi(&ctx);
 	mipi_dsi_msleep(&ctx, 120);
@@ -236,8 +225,6 @@ static int st7365_init(struct st7365 *panel)
 
 	mipi_dsi_dcs_exit_sleep_mode_multi(&ctx);
 	mipi_dsi_msleep(&ctx, 120);
-
-	// mipi_dsi_dcs_set_display_on_multi(&ctx);
 
 	return ctx.accum_err;
 }
@@ -304,12 +291,10 @@ static int st7365_enable(struct drm_panel *panel)
 
 	dev_info(panel->dev, "enable start.");
 
-	// msleep(120);
-
 	mipi_dsi_dcs_set_display_on_multi(&ctx);
 
-	mipi_dsi_dcs_get_pixel_format(st7365->dsi, &pixel_format);
-	dev_info(panel->dev, "pixel format: %d", pixel_format);
+	// mipi_dsi_dcs_get_pixel_format(st7365->dsi, &pixel_format);
+	// dev_info(panel->dev, "pixel format: %d", pixel_format);
 
 	dev_info(panel->dev, "enable done.");
 
@@ -323,8 +308,6 @@ static int st7365_disable(struct drm_panel *panel)
 
 	dev_info(panel->dev, "disable start.");
 
-	// int ret;
-	// ret = st7365_off(ctx);
 	mipi_dsi_dcs_set_display_off_multi(&ctx);
 
 	dev_info(panel->dev, "disable done.");
@@ -353,17 +336,6 @@ static int st7365_get_modes(struct drm_panel *panel,
 
 	connector->display_info.width_mm = mode->width_mm;
 	connector->display_info.height_mm = mode->height_mm;
-
-	// drm_display_info_set_bus_formats(&connector->display_info,
-	// 				 &ctx->desc->bus_format, 1);
-	// connector->display_info.bus_flags =
-	// 	DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE;
-
-	/*
-	 * TODO: Remove once all drm drivers call
-	 * drm_connector_set_orientation_from_panel()
-	 */
-	drm_connector_set_panel_orientation(connector, ctx->orientation);
 
 	return 1;
 }
@@ -430,13 +402,8 @@ static const struct st7365_panel_desc gd035hv316b_desc = {
 	.lanes = 1,
 	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
 		      MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_LPM,
-	.format = MIPI_DSI_FMT_RGB565, // MIPI_DSI_FMT_RGB888
-	// .bus_format =
-	// MEDIA_BUS_FMT_RGB666_1X18,
-	// MEDIA_BUS_FMT_RGB888_1X24,
-	// MEDIA_BUS_FMT_RGB565_1X16,
-	// MEDIA_BUS_FMT_RGB666_1X24_CPADHI?
-	.init_sequence = gd035hv316b_init_sequence_2,
+	.format = MIPI_DSI_FMT_RGB666, // MIPI_DSI_FMT_RGB888
+	.init_sequence = gd035hv316b_init_sequence,
 };
 
 // MARK: desc
@@ -465,16 +432,8 @@ static const struct st7365_panel_desc jt60849_desc = {
 	.mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
 		      MIPI_DSI_MODE_VIDEO_SYNC_PULSE | MIPI_DSI_MODE_LPM,
 	.format =
-		// MIPI_DSI_FMT_RGB888,
-	// MIPI_DSI_FMT_RGB666,
-	// MIPI_DSI_FMT_RGB666_PACKED,
-	MIPI_DSI_FMT_RGB565,
+		MIPI_DSI_FMT_RGB565, // MIPI_DSI_FMT_RGB666, MIPI_DSI_FMT_RGB666_PACKED, MIPI_DSI_FMT_RGB888
 
-	// .bus_format =
-	// MEDIA_BUS_FMT_RGB666_1X18,
-	// MEDIA_BUS_FMT_RGB888_1X24,
-	// MEDIA_BUS_FMT_RGB565_1X16,
-	// MEDIA_BUS_FMT_RGB666_1X24_CPADHI,
 	.init_sequence = jt60849_init_sequence,
 };
 
