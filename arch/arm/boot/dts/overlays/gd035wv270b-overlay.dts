@@ -30,7 +30,7 @@
  					panel_in:endpoint {
  						remote-endpoint = <&dsi_out>;
  					};
- 				};ls
+ 				};
 				
  			};
  		};
