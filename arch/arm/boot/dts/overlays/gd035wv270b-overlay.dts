@@ -11,8 +11,6 @@
  
  		__overlay__ {
  			status = "okay";
-             #address-cells = <1>;
- 			#size-cells = <0>;
  
             port {
  				dsi_out:endpoint {
@@ -21,10 +19,9 @@
  			};
  
             gd035wv270b:gd035wv270b@0 {
- 				compatible = "gd035wv270b","sitronix,st7701";
+ 				compatible = "gd035wv270b";
  				reg = <0>;
  				status = "okay";
-				rotation = <90>;
  				reset-gpios = <&gpio 17 GPIO_ACTIVE_LOW>;
  				port {
  					panel_in:endpoint {

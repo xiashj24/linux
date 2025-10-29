@@ -483,7 +483,7 @@ static const struct st7365_panel_desc gd035hv316b_desc = {
 
 
 static const struct drm_display_mode jt60849_mode = {
-	.clock = 4000, // 12000
+	.clock = 12000, // 12000
 
 	.hdisplay = 320,
 	.hsync_start = 320 + 24, // front 24
