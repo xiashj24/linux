@@ -363,7 +363,8 @@ dtbo-$(CONFIG_ARCH_BCM2835) += \
 dtbo-$(CONFIG_ARCH_BCM2835) += \
 	jt60849.dtbo \
 	gd035hv316b.dtbo \
-	gd035wv270b.dtbo
+	gd035wv270b.dtbo \
+	jt60363.dtbo
 
 targets += dtbs dtbs_install
 targets += $(dtbo-y)

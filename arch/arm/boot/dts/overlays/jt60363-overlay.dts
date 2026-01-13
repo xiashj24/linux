@@ -1,0 +1,39 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/gpio/gpio.h>
+ 
+/ {
+    compatible = "brcm,bcm2835";
+ 	
+ 	dsi_frag:fragment@0 {
+ 		target = <&dsi1>;
+ 
+ 		__overlay__ {
+ 			status = "okay";
+ 
+            port {
+ 				dsi_out:endpoint {
+ 					remote-endpoint = <&panel_in>;
+ 				};
+ 			};
+ 
+            jt60363:jt60363@0 {
+ 				compatible = "jt60363";
+ 				reg = <0>;
+ 				status = "okay";
+ 				reset-gpios = <&gpio 17 GPIO_ACTIVE_LOW>;
+ 				port {
+ 					panel_in:endpoint {
+ 						remote-endpoint = <&dsi_out>;
+ 					};
+ 				};
+				
+ 			};
+ 		};
+ 	};
+ 
+ 	__overrides__ {
+ 		dsi0 = <&dsi_frag>, "target:0=",<&dsi0>;
+ 	};
+};
