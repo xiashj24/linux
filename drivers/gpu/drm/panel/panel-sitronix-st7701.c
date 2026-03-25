@@ -633,6 +633,80 @@ static void txw210001b0_gip_sequence(struct st7701 *st7701)
 	ST7701_WRITE(st7701, MIPI_DCS_EXIT_SLEEP_MODE);
 }
 
+
+// MARK: jt60363 init
+// TODO: review this sequence, maybe port these info to the description (Marcros)
+static void jt60363_gip_sequence(struct st7701 *st7701)
+{
+	/* Command2, BK0 */
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x10);
+
+	ST7701_WRITE(st7701, 0xC0, 0x63, 0x00);
+	ST7701_WRITE(st7701, 0xC1, 0x0A, 0x02);
+	ST7701_WRITE(st7701, 0xC2, 0x07, 0x02); /* Column: 20->1dot(0x02) */
+	ST7701_WRITE(st7701, 0xCC, 0x18);
+
+	ST7701_WRITE(st7701, 0xB0,
+		     0x00, 0x11, 0x19, 0x0C, 0x10, 0x06, 0x07, 0x0A,
+		     0x09, 0x22, 0x04, 0x10, 0x0E, 0x28, 0x30, 0x1C);
+	ST7701_WRITE(st7701, 0xB1,
+		     0x00, 0x12, 0x19, 0x0D, 0x10, 0x04, 0x06, 0x07,
+		     0x08, 0x23, 0x04, 0x12, 0x11, 0x28, 0x30, 0x1C);
+
+	/* Command2, BK1 */
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x11);
+
+	ST7701_WRITE(st7701, 0xB0, 0x4D);
+	ST7701_WRITE(st7701, 0xB1, 0x38);
+	ST7701_WRITE(st7701, 0xB2, 0x90);
+	ST7701_WRITE(st7701, 0xB3, 0x80);
+	ST7701_WRITE(st7701, 0xB5, 0x45);
+	ST7701_WRITE(st7701, 0xB7, 0x85);
+	ST7701_WRITE(st7701, 0xB8, 0x23);
+	ST7701_WRITE(st7701, 0xB9, 0x22, 0x13);
+
+	ST7701_WRITE(st7701, 0xC1, 0x78);
+	ST7701_WRITE(st7701, 0xC2, 0x78);
+	msleep(100);
+
+	ST7701_WRITE(st7701, 0xD0, 0x88);
+
+	/* GIP setting */
+	ST7701_WRITE(st7701, 0xE0, 0x00, 0x00, 0x02);
+	ST7701_WRITE(st7701, 0xE1,
+		     0x04, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
+		     0x00, 0x20, 0x20);
+	ST7701_WRITE(st7701, 0xE2,
+		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0x00, 0x00, 0x00, 0x00, 0x00);
+	ST7701_WRITE(st7701, 0xE3, 0x00, 0x00, 0x33, 0x00);
+	ST7701_WRITE(st7701, 0xE4, 0x22, 0x00);
+	ST7701_WRITE(st7701, 0xE5,
+		     0x04, 0x34, 0xAF, 0xB3, 0x06, 0x34, 0xAF, 0xB3,
+		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0x00, 0x00);
+	ST7701_WRITE(st7701, 0xE6, 0x00, 0x00, 0x33, 0x00);
+	ST7701_WRITE(st7701, 0xE7, 0x22, 0x00);
+	ST7701_WRITE(st7701, 0xE8,
+		     0x05, 0x34, 0xAF, 0xB3, 0x07, 0x34, 0xAF, 0xB3,
+		     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		     0x00, 0x00);
+	ST7701_WRITE(st7701, 0xEB, 0x02, 0x00, 0x40, 0x40, 0x00, 0x00, 0x00);
+	ST7701_WRITE(st7701, 0xEC, 0x00, 0x00);
+	ST7701_WRITE(st7701, 0xED,
+		     0xFA, 0x45, 0x0B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xB0, 0x54, 0xAF);
+
+	/* Back to Command1 */
+	ST7701_WRITE(st7701, 0xFF, 0x77, 0x01, 0x00, 0x00, 0x00);
+
+	ST7701_WRITE(st7701, MIPI_DCS_EXIT_SLEEP_MODE);
+	msleep(500);
+
+	// ST7701_WRITE(st7701, MIPI_DCS_SET_DISPLAY_ON);
+	// msleep(40);
+}
+
 static int st7701_prepare(struct drm_panel *panel)
 {
 	struct st7701 *st7701 = panel_to_st7701(panel);
@@ -1505,6 +1579,33 @@ static const struct st7701_panel_desc hyperpixel2r_desc = {
 	.bus_flags = DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE,
 };
 
+// MARK: jt60363 desc
+static const struct drm_display_mode jt60363_mode = {
+	.clock = 26000,
+
+	.hdisplay = 480,
+	.hsync_start = 480 + 4,
+	.hsync_end = 480 + 4 + 10,
+	.htotal = 480 + 4 + 10 + 32,
+
+	.vdisplay = 800,
+	.vsync_start = 800 + 4,
+	.vsync_end = 800 + 4 + 4,
+	.vtotal = 800 + 4 + 4 + 12,
+
+	.width_mm = 55,
+	.height_mm = 94,
+
+	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
+};
+
+static const struct st7701_panel_desc jt60363_desc = {
+	.mode = &jt60363_mode,
+	.lanes = 2,
+	.format = MIPI_DSI_FMT_RGB888,
+	.gip_sequence = jt60363_gip_sequence,
+};
+
 static void st7701_cleanup(void *data)
 {
 	struct st7701 *st7701 = (struct st7701 *)data;
@@ -1636,6 +1737,7 @@ static const struct of_device_id st7701_dsi_of_match[] = {
 	{ .compatible = "elida,kd50t048a", .data = &kd50t048a_desc },
 	{ .compatible = "techstar,ts8550b", .data = &ts8550b_desc },
 	{ .compatible = "winstar,wf40eswaa6mnn0", .data = &wf40eswaa6mnn0_desc },
+	{ .compatible = "jt60363", .data = &jt60363_desc },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, st7701_dsi_of_match);
